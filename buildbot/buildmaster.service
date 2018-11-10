@@ -1,0 +1,14 @@
+[Unit]
+Description=Buildbot master
+After=network.target
+
+[Service]
+WorkingDirectory=/home/buildbot/master
+ExecStart=/home/buildbot/venv/bin/buildbot start
+Type=forking
+Restart=always
+Nice=-2
+User=buildbot
+
+[Install]
+WantedBy=multi-user.target
