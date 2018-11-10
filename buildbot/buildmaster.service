@@ -4,6 +4,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/home/buildbot/master
+Environment=BB_CONF=conf/prod.py
 ExecStart=/home/buildbot/venv/bin/buildbot start
 Type=forking
 Restart=always
