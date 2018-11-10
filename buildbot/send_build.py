@@ -1,4 +1,4 @@
-#! /usr/bin/env python2
+#!/usr/bin/env python3
 
 import hashlib
 import hmac
@@ -8,10 +8,13 @@ import requests
 CALLBACK_URL = 'https://dolphin-emu.org/download/new/'
 DOWNLOADS_CREATE_KEY = open('/etc/dolphin-keys/downloads-create').read().strip()
 
+
 def get_env_var(name):
-    if name not in os.environ:
-        raise KeyError("%s is missing from the environment" % name)
-    return os.environ[name].decode("utf-8")
+    try:
+        return os.environ[name].decode("utf-8")
+    except KeyError:
+        raise KeyError(f"{name} is missing from the environment") from None
+
 
 if __name__ == '__main__':
     branch = get_env_var('BRANCH')
@@ -23,13 +26,10 @@ if __name__ == '__main__':
     build_url = get_env_var('BUILD_URL')
     user_os_matcher = get_env_var('USER_OS_MATCHER')
 
-    msg = u"%d|%d|%d|%d|%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s" % (
-        len(branch), len(shortrev), len(hash), len(author), len(description),
-        len(target_system), len(build_url), len(user_os_matcher),
+    parts = [branch, shortrev, hash, author, description, target_system,
+             build_url, user_os_matcher]
 
-        branch, shortrev, hash, author, description, target_system, build_url,
-        user_os_matcher
-    )
+    msg = "|".join([str(len(part)) for part in parts] + parts)
     hm = hmac.new(DOWNLOADS_CREATE_KEY, msg.encode("utf-8"), hashlib.sha1)
 
     post_data = {
@@ -41,8 +41,9 @@ if __name__ == '__main__':
         'target_system': target_system,
         'build_url': build_url,
         'user_os_matcher': user_os_matcher,
-        'hmac': hm.hexdigest()
+        'hmac': hm.hexdigest(),
     }
 
     r = requests.post(CALLBACK_URL, data=post_data)
-    print r.text
+    r.raise_for_status()
+    print(r.text)
